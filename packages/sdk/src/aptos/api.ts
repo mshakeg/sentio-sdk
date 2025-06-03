@@ -45,12 +45,21 @@ export class RichAptosClientWithContext extends RichAptosClient {
   }
 
   private transformArgs<T extends { options?: LedgerVersionArg }>(args: T): T {
-    if (!args.options?.ledgerVersion) {
+    // Check if ledgerVersion was explicitly provided (including null)
+    if (!args.options || !('ledgerVersion' in args.options)) {
+      // No ledgerVersion specified at all - use context version
       args.options = {
         ...args.options,
         ledgerVersion: this.ctx.version
       }
+    } else if (args.options.ledgerVersion === null) {
+      // Explicitly requested latest state with null
+      args.options = {
+        ...args.options,
+        ledgerVersion: undefined // This tells Aptos SDK to use latest
+      }
     }
+    // Otherwise, use the provided ledgerVersion as-is
     return args
   }
 
